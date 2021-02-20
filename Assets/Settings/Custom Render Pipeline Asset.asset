@@ -15,3 +15,7 @@ MonoBehaviour:
   m_useDynamicBatching: 1
   m_useGpuInstancing: 1
   m_useSRPBatcher: 1
+  m_shadowSettings:
+    MaxDistance: 20
+    directional:
+      atlasSize: 1024

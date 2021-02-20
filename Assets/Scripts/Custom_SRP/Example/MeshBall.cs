@@ -11,6 +11,8 @@ namespace Custom_SRP.Example
     {
         private const int RENDER_COUNT = 1023;
         private static int g_baseColorId { get; } = Shader.PropertyToID("_BaseColor");
+        private static int g_metallicId { get; } = Shader.PropertyToID("_Metallic");
+        private static int g_smoothnessId { get; } = Shader.PropertyToID("_Smoothness");
 
         [SerializeField] private Mesh m_mesh = default;
         [SerializeField] private Material m_material;
@@ -19,12 +21,16 @@ namespace Custom_SRP.Example
         private MaterialPropertyBlock m_propertyBlock;
         private Matrix4x4[] m_transformMatrixs;
         private Vector4[] m_colors;
+        private float[] m_metallic;
+        private float[] m_smoothness;
 
         private void Awake()
         {
             m_propertyBlock = new MaterialPropertyBlock();
             m_transformMatrixs = new Matrix4x4[RENDER_COUNT];
             m_colors = new Vector4[RENDER_COUNT];
+            m_metallic = new float[RENDER_COUNT];
+            m_smoothness = new float[RENDER_COUNT];
 
             for (int i = 0; i < RENDER_COUNT; i++)
             {
@@ -35,9 +41,13 @@ namespace Custom_SRP.Example
                     );
                 var color = Random.insideUnitSphere;
                 m_colors[i] = new Vector4(color.x, color.y, color.z, Random.Range(0.5f, 1.0f));
+                m_metallic[i] = Random.Range(0.0f, 1.0f) > 0.5f ? 0.0f : 1.0f;
+                m_smoothness[i] = Random.value;
             }
 
             m_propertyBlock.SetVectorArray(g_baseColorId, m_colors);
+            m_propertyBlock.SetFloatArray(g_metallicId, m_metallic);
+            m_propertyBlock.SetFloatArray(g_smoothnessId, m_smoothness);
         }
 
         void Update()

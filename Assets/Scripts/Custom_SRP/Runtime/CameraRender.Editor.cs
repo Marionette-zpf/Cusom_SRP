@@ -17,7 +17,7 @@ namespace Custom_SRP.Runtime
     /// </summary>
     public partial class CameraRender
     {
-        partial void DrawUnsupportedShaders();
+        partial void RenderUnsupportedShaders();
         partial void DrawGizmos();
         partial void PrepareForSceneWindow();
         partial void PrepareBuffer();
@@ -36,7 +36,7 @@ namespace Custom_SRP.Runtime
 
         private string m_sampleName { get; set; }
 
-        partial void DrawUnsupportedShaders()
+        partial void RenderUnsupportedShaders()
         {
             var sortingSettings = new SortingSettings(m_camera);
             var drawingSettings = new DrawingSettings(g_legacy_shader_tag_ids[0], sortingSettings) { overrideMaterial = g_error_material };

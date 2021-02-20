@@ -21,6 +21,11 @@ namespace Custom_SRP.Runtime
             name = LIGHT_BUFFER_NAME
         };
 
+        private CommandBuffer m_shadowBuffer = new CommandBuffer()
+        {
+            name = SHADOW_BUFFER_NAME
+        };
+
 
         private ScriptableRenderContext m_renderContext;
         private Camera m_camera;
@@ -30,6 +35,8 @@ namespace Custom_SRP.Runtime
         private Vector4[] m_dirLightColors = new Vector4[MAX_DIR_LIGHT_COUNT];
         private Vector4[] m_dirLightDirections = new Vector4[MAX_DIR_LIGHT_COUNT];
 
+        private ShadowedDirectionalLight[] m_shadowedDirectionalLights = new ShadowedDirectionalLight[MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT];
+        private int m_shadowedDirectionalLightCount = 0;
 
         public void Render(ScriptableRenderContext renderContext, Camera camera, PipelineSettings settings)
         {
@@ -43,31 +50,45 @@ namespace Custom_SRP.Runtime
 
 
             //-------------------------culling---------------------------
+            //error?
             if (!Culling(out m_cullingResult)) return;
 
 
-            //-------------------------setup properties------------------
-            SetupProperties();
-
-
             //-------------------------redner----------------------------
-            Render();
+            //render shadow
+            SetupShadowProperties();
+            RenderShadows();
+
+            //render objs
+            SetupCommonProperties();
+            RenderCommon();
+
+
+            //-------------------------clearup--------------------------
+            Clearup();
 
 
             //---------------------submit render---------------------------
-            Submit();
+            Submit(); 
         }
 
         private bool Culling(out CullingResults cullingResults)
         {
             if(m_camera.TryGetCullingParameters(out ScriptableCullingParameters cullingParameters))
             {
+                cullingParameters.shadowDistance = Mathf.Min(m_camera.farClipPlane, m_settings.ShadowSettings.MaxDistance);
                 cullingResults = m_renderContext.Cull(ref cullingParameters);
                 return true;
             }
 
             cullingResults = default;
             return false;
+        }
+
+        private void Clearup()
+        {
+            m_shadowBuffer.ReleaseTemporaryRT(g_dir_shadow_atlas_id);
+            ExecuteBuffer(m_shadowBuffer);
         }
 
         private void Submit()
@@ -78,6 +99,12 @@ namespace Custom_SRP.Runtime
         private void ExecuteBuffer(Action<CommandBuffer> execute)
         {
             ExecuteBuffer(execute, m_commandBuffer);
+        }
+
+        private void ExecuteBuffer(CommandBuffer buffer)
+        {
+            m_renderContext.ExecuteCommandBuffer(buffer);
+            buffer.Clear();
         }
 
         private void ExecuteBuffer(Action<CommandBuffer> execute, CommandBuffer buffer)

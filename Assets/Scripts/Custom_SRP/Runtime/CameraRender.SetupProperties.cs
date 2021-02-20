@@ -11,10 +11,15 @@ namespace Custom_SRP.Runtime
     /// </summary>
     public partial class CameraRender
     {
-        private void SetupProperties()
+        private void SetupCommonProperties()
         {
             //setup camera properties
             SetupCameraProperties();
+        }
+
+        private void SetupShadowProperties()
+        {
+            m_shadowedDirectionalLightCount = 0;
 
             //setup lighting properties
             ExecuteSampleBuffer(buffer => SetupLightingProperties(buffer), m_lightingBuffer, LIGHT_BUFFER_NAME);
@@ -48,11 +53,33 @@ namespace Custom_SRP.Runtime
         {
             m_dirLightColors[index] = light.finalColor;
             m_dirLightDirections[index] = -light.localToWorldMatrix.GetColumn(2);
+            //error?
+            ReserveDirectionalShadows(light.light, index);
         }
 
         private void SetupCameraProperties()
         {
             m_renderContext.SetupCameraProperties(m_camera);
+        }
+
+        private void ReserveDirectionalShadows(Light light, int visibleLightIndex)
+        {
+            if (IsValidDirectionalShadows(light, visibleLightIndex))
+            {
+                m_shadowedDirectionalLights[m_shadowedDirectionalLightCount++] =
+                    new ShadowedDirectionalLight
+                    {
+                        visibleLightIndex = visibleLightIndex
+                    };
+            }
+        }
+
+        private bool IsValidDirectionalShadows(Light light, int visibleLightIndex)
+        {
+            return m_shadowedDirectionalLightCount < MAX_SHADOWED_DIRECTIONAL_LIGHT_COUNT
+                && light.shadows != LightShadows.None
+                && light.shadowStrength > 0f
+                && m_cullingResult.GetShadowCasterBounds(visibleLightIndex, out Bounds b);
         }
     }
 }
